@@ -267,8 +267,8 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
         if 'min_nights_capped' in df.columns:
             covariate_cols.append('min_nights_capped')
         
-        # Neighborhood dummies
-        neighborhood_cols = [c for c in df.columns if c.startswith('neighborhood_')]
+        # Neighborhood dummies (only the numeric ones we created)
+        neighborhood_cols = [c for c in df.columns if c.startswith('neighborhood_') and c[-1].isdigit()]
         covariate_cols.extend(neighborhood_cols)
         
        # Only keep columns that exist and have no issues
