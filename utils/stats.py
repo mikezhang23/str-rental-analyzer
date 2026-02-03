@@ -236,8 +236,12 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
     
     import streamlit as st
     
-   # Make a copy
     df = _df.copy()
+    
+    # DEBUG
+    st.write(f"DEBUG: Starting with {len(df)} rows")
+    st.write(f"DEBUG: distance_from_strip nulls: {df['distance_from_strip'].isna().sum() if 'distance_from_strip' in df.columns else 'NOT FOUND'}")
+    st.write(f"DEBUG: Columns available: {[c for c in df.columns if c.startswith('is_') or c.startswith('neighborhood_') or c == 'distance_from_strip']}")
     
     # Default covariates - comprehensive list
     if covariate_cols is None:
