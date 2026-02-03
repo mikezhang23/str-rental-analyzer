@@ -219,7 +219,7 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
         
         # Only keep columns that actually exist
         covariate_cols = [c for c in covariate_cols if c in df.columns]
-
+        
     """
     Calculate Average Treatment Effect (ATE) of an amenity using PSM.
     
