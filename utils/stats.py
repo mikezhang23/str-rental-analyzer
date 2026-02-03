@@ -371,24 +371,28 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
 def get_all_amenity_impacts(_df):
     """
     Calculate causal impact for all amenities.
-    
-    Args:
-        _df: Listings DataFrame with amenity flags
-        
-    Returns:
-        DataFrame with amenity impact estimates
     """
+    import streamlit as st
+    
     # List of amenity columns to analyze
     amenity_cols = [col for col in _df.columns if col.startswith('has_')]
+    
+    # Remove has_availability if present (not a real amenity)
+    amenity_cols = [col for col in amenity_cols if col != 'has_availability']
+    
+    st.write("DEBUG: Amenity columns to analyze:", amenity_cols)
     
     results = []
     
     for amenity_col in amenity_cols:
-        # Get clean amenity name
         amenity_name = amenity_col.replace('has_', '').replace('_', ' ').title()
+        
+        st.write(f"DEBUG: Processing {amenity_name}...")
         
         # Calculate ATE
         impact = calculate_amenity_ate(_df, amenity_col)
+        
+        st.write(f"DEBUG: {amenity_name} result:", impact)
         
         if impact.get('ate') is not None:
             results.append({
@@ -404,12 +408,11 @@ def get_all_amenity_impacts(_df):
                 'baseline_revenue': impact['baseline_revenue']
             })
     
-    # Convert to DataFrame and sort by impact
+    # Convert to DataFrame
     if len(results) > 0:
         results_df = pd.DataFrame(results)
         results_df = results_df.sort_values('revenue_impact', ascending=False)
     else:
-        # Return empty DataFrame with expected columns
         results_df = pd.DataFrame(columns=[
             'amenity', 'amenity_col', 'revenue_impact', 'pct_lift',
             'ci_lower', 'ci_upper', 'p_value', 'significant', 
