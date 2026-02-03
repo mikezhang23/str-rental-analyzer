@@ -198,6 +198,15 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
     # Make a copy
     df = _df.copy()
     
+    # Add neighborhood dummies FIRST (before defining covariates)
+    hood_cols = []
+    if 'neighbourhood_cleansed' in df.columns:
+        top_hoods = df['neighbourhood_cleansed'].value_counts().head(7).index.tolist()
+        for i, hood in enumerate(top_hoods):
+            col_name = f'hood_{i}'
+            df[col_name] = (df['neighbourhood_cleansed'] == hood).astype(int)
+            hood_cols.append(col_name)
+    
     # Default covariates
     if covariate_cols is None:
         covariate_cols = ['bedrooms', 'accommodates']
@@ -205,15 +214,10 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
         if 'bathrooms' in df.columns:
             covariate_cols.append('bathrooms')
         
-        # Add neighborhood if available (important for accurate matching)
-        if 'neighbourhood_cleansed' in df.columns:
-            # Create dummy variables for top neighborhoods (use simple numeric names)
-            top_hoods = df['neighbourhood_cleansed'].value_counts().head(10).index.tolist()
-            for i, hood in enumerate(top_hoods):
-                col_name = f'hood_{i}'  # Simple names avoid special character issues
-                df[col_name] = (df['neighbourhood_cleansed'] == hood).astype(int)
-                covariate_cols.append(col_name)
+        # Add the hood columns we just created
+        covariate_cols.extend(hood_cols)
         
+        # Only keep columns that actually exist
         covariate_cols = [c for c in covariate_cols if c in df.columns]
 
     """
