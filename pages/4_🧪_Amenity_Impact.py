@@ -133,29 +133,26 @@ if len(amenity_impacts) > 0:
     with leg_col4:
         st.markdown("🔵 **Inconclusive**")
     
-# Explanation for negative impacts
-if len(not_recommended) > 0 or len(chart_data[chart_data['revenue_impact'] < 0]) > 0:
-    with st.expander("Why do some amenities show negative or inconclusive results?"):
-        st.markdown("""
-        **Negative results don't mean the amenity hurts revenue.**
-        
-        Our analysis controls for bedrooms, bathrooms, capacity, and neighborhood — but some factors we can't measure:
-        
-        - **Distance from the Strip**: A property in Henderson near the Strip performs differently than one 30 minutes away
-        - **Property condition**: Updated vs dated properties
-        - **Micro-location**: Within "Henderson" there's huge variation
-        
-        **Example: EV Chargers**
-        
-        Properties with EV chargers tend to be:
-        - Newer suburban homes
-        - In residential (non-tourist) areas
-        - Further from attractions
-        
-        The EV charger isn't reducing revenue — it's just more common in properties that happen to be in lower-performing areas.
-        
-        **Our approach**: We only recommend amenities with positive, statistically significant impacts. Negative results are labeled "Inconclusive" because we can't separate the amenity effect from location effects.
-        """)
+    # Explanation for negative impacts
+    if len(not_recommended) > 0 or len(chart_data[chart_data['revenue_impact'] < 0]) > 0:
+        with st.expander("Why do some amenities show negative impact?"):
+            st.markdown("""
+            **This doesn't necessarily mean the amenity hurts revenue.** Negative results can occur when:
+            
+            1. **Uncontrolled variables**: Our model controls for bedrooms, bathrooms, capacity, and neighborhood, 
+               but other factors (property age, condition, exact location within neighborhood) aren't captured.
+            
+            2. **Sample concentration**: If most properties with outdoor kitchens are in one specific area 
+               that happens to underperform, the model may attribute that area's performance to the amenity.
+            
+            3. **Guest type differences**: Some amenities may attract different guest types with different 
+               booking patterns (e.g., longer stays at lower nightly rates).
+            
+            4. **Statistical noise**: With smaller sample sizes, random variation can produce misleading results.
+            
+            **Our recommendation**: Treat negative results as "inconclusive" rather than definitive evidence 
+            that the amenity hurts revenue. Focus on amenities with positive, statistically significant impacts.
+            """)
 
 
 # ---------------------------------------------------------------------
