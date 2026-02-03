@@ -24,8 +24,17 @@ st.markdown("Understand which amenities actually drive revenue using causal infe
 # ---------------------------------------------------------------------
 
 airbnb = load_listings_with_amenities()
-amenity_impacts = get_all_amenity_impacts(airbnb)
 
+# DEBUG: Check if amenity flags exist
+st.write("DEBUG: Columns with 'has_':", [c for c in airbnb.columns if c.startswith('has_')])
+st.write("DEBUG: Total rows:", len(airbnb))
+
+if 'has_pool' in airbnb.columns:
+    st.write("DEBUG: Properties with pool:", airbnb['has_pool'].sum())
+    st.write("DEBUG: Properties without pool:", (~airbnb['has_pool']).sum())
+
+amenity_impacts = get_all_amenity_impacts(airbnb)
+st.write("DEBUG: Amenity impacts shape:", amenity_impacts.shape if len(amenity_impacts) > 0 else "Empty")
 
 # ---------------------------------------------------------------------
 # OVERVIEW SECTION
