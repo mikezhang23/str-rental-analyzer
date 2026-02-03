@@ -198,12 +198,6 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
     # Make a copy
     df = _df.copy()
     
-    # DEBUG: Check initial state
-    st.write(f"DEBUG ATE: Starting with {len(df)} rows")
-    st.write(f"DEBUG ATE: Amenity col type: {df[amenity_col].dtype}")
-    st.write(f"DEBUG ATE: Amenity unique values: {df[amenity_col].unique()[:5]}")
-    st.write(f"DEBUG ATE: Amenity value counts: {df[amenity_col].value_counts().to_dict()}")
-    
     # Default covariates
     if covariate_cols is None:
         covariate_cols = ['bedrooms', 'accommodates']
@@ -213,14 +207,11 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
             
         covariate_cols = [c for c in covariate_cols if c in df.columns]
     
-    st.write(f"DEBUG ATE: Covariates: {covariate_cols}")
     
     # Check which covariates have data
     for col in covariate_cols:
-        st.write(f"DEBUG ATE: {col} - nulls: {df[col].isna().sum()}, dtype: {df[col].dtype}")
-    
-    st.write(f"DEBUG ATE: {outcome_col} - nulls: {df[outcome_col].isna().sum()}")
-    
+
+
     """
     Calculate Average Treatment Effect (ATE) of an amenity using PSM.
     
@@ -411,20 +402,15 @@ def get_all_amenity_impacts(_df):
     # Remove has_availability if present (not a real amenity)
     amenity_cols = [col for col in amenity_cols if col != 'has_availability']
     
-    st.write("DEBUG: Amenity columns to analyze:", amenity_cols)
     
     results = []
     
     for amenity_col in amenity_cols:
         amenity_name = amenity_col.replace('has_', '').replace('_', ' ').title()
         
-        st.write(f"DEBUG: Processing {amenity_name}...")
-        
         # Calculate ATE
         impact = calculate_amenity_ate(_df, amenity_col)
-        
-        st.write(f"DEBUG: {amenity_name} result:", impact)
-        
+    
         if impact.get('ate') is not None:
             results.append({
                 'amenity': amenity_name,
