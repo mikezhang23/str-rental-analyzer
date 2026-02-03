@@ -135,7 +135,7 @@ if len(amenity_impacts) > 0:
     
     # Explanation for negative impacts
     if len(not_recommended) > 0 or len(chart_data[chart_data['revenue_impact'] < 0]) > 0:
-        with st.expander("Why do some amenities show negative or inconclusive results?"):
+    with st.expander("Why do some amenities show negative or inconclusive results?"):
         st.markdown("""
         **Negative results don't mean the amenity hurts revenue.**
         
