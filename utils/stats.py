@@ -238,11 +238,6 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
     
     df = _df.copy()
     
-    # DEBUG
-    st.write(f"DEBUG: Starting with {len(df)} rows")
-    st.write(f"DEBUG: distance_from_strip nulls: {df['distance_from_strip'].isna().sum() if 'distance_from_strip' in df.columns else 'NOT FOUND'}")
-    st.write(f"DEBUG: Columns available: {[c for c in df.columns if c.startswith('is_') or c.startswith('neighborhood_') or c == 'distance_from_strip']}")
-
     # Default covariates - comprehensive list
     if covariate_cols is None:
         covariate_cols = []
@@ -274,13 +269,10 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
        # Only keep columns that exist and have no issues
         covariate_cols = [c for c in covariate_cols if c in df.columns]
         
-        # DEBUG: Show what we're using
-        st.write(f"DEBUG: Covariates selected: {covariate_cols}")
-        
         # Check for NaN in each covariate
         for col in covariate_cols:
             null_count = df[col].isna().sum()
-            st.write(f"DEBUG: {col} - nulls: {null_count}, dtype: {df[col].dtype}")
+            
 
     """
     Calculate Average Treatment Effect (ATE) of an amenity using PSM.
@@ -354,10 +346,7 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
     # Prepare data - drop rows with missing values
     required_cols = [amenity_col, outcome_col] + covariate_cols
     df_clean = df.dropna(subset=required_cols).copy()
-    
-    # DEBUG
-    st.write(f"DEBUG: After dropna: {len(df_clean)} rows (dropped {len(df) - len(df_clean)})")
-    
+        
     # Need sufficient sample size
     n_treated = df_clean[amenity_col].sum()
     n_control = len(df_clean) - n_treated
