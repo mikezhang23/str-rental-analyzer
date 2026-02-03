@@ -24,6 +24,7 @@ st.markdown("Understand which amenities actually drive revenue using causal infe
 # ---------------------------------------------------------------------
 
 airbnb = load_listings_with_amenities()
+amenity_impacts = get_all_amenity_impacts(airbnb)
 
 # ---------------------------------------------------------------------
 # OVERVIEW SECTION
