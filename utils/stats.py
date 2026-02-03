@@ -92,6 +92,12 @@ def prepare_amenity_flags(df):
             lambda x: has_amenity(x, keywords)
         )
     
+    # Add neighborhood dummy variables for PSM
+    if 'neighbourhood_cleansed' in df.columns:
+        top_hoods = df['neighbourhood_cleansed'].value_counts().head(7).index.tolist()
+        for i, hood in enumerate(top_hoods):
+            df[f'neighborhood_{i}'] = (df['neighbourhood_cleansed'] == hood).astype(int)
+    
     return df
 
 
@@ -188,7 +194,6 @@ def match_propensity_scores(df, treatment_col, propensity_scores, caliper=0.05):
 
 
 @st.cache_data
-@st.cache_data
 def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue', 
                           covariate_cols=None):
     """..."""
@@ -198,12 +203,16 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
    # Make a copy
     df = _df.copy()
     
-    # Default covariates (simple version - no neighborhood for now)
+    # Default covariates
     if covariate_cols is None:
         covariate_cols = ['bedrooms', 'accommodates']
         
         if 'bathrooms' in df.columns:
             covariate_cols.append('bathrooms')
+        
+        # Add neighborhood dummies (created in prepare_amenity_flags)
+        neighborhood_cols = [c for c in df.columns if c.startswith('neighborhood_')]
+        covariate_cols.extend(neighborhood_cols)
         
         # Only keep columns that actually exist
         covariate_cols = [c for c in covariate_cols if c in df.columns]
