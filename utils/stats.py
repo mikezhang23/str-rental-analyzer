@@ -204,7 +204,16 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
         
         if 'bathrooms' in df.columns:
             covariate_cols.append('bathrooms')
-            
+        
+        # Add neighborhood if available (important for accurate matching)
+        if 'neighbourhood_cleansed' in df.columns:
+            # Create dummy variables for top neighborhoods
+            top_hoods = df['neighbourhood_cleansed'].value_counts().head(10).index.tolist()
+            for hood in top_hoods:
+                col_name = f'hood_{hood[:20]}'  # Truncate long names
+                df[col_name] = (df['neighbourhood_cleansed'] == hood).astype(int)
+                covariate_cols.append(col_name)
+        
         covariate_cols = [c for c in covariate_cols if c in df.columns]
 
     """
