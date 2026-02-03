@@ -33,20 +33,16 @@ from sklearn.neighbors import NearestNeighbors
 def prepare_amenity_flags(df):
     """
     Parse amenities column and create boolean flags for key amenities.
-    
-    Args:
-        df: Listings dataframe with 'amenities' column
-        
-    Returns:
-        DataFrame with boolean columns for each amenity
+    Also adds control variables for PSM.
     """
     import ast
+    import math
     
-    # Make a copy to avoid modifying original
+    # Make a copy
     df = df.copy()
     
     # Parse amenities string into list (if stored as string)
-    if df['amenities'].dtype == 'object':
+    if 'amenities' in df.columns and df['amenities'].dtype == 'object':
         def safe_parse(x):
             try:
                 if pd.isna(x):
@@ -58,11 +54,10 @@ def prepare_amenity_flags(df):
                 return []
         
         df['amenities_list'] = df['amenities'].apply(safe_parse)
-    else:
-        df['amenities_list'] = df['amenities']
+    elif 'amenities_list' not in df.columns:
+        df['amenities_list'] = [[]] * len(df)
     
     # Define amenities to analyze
-    # These are amenities that can be added to a property
     amenities_to_check = {
         'pool': ['pool', 'swimming'],
         'hot_tub': ['hot tub', 'jacuzzi', 'spa'],
@@ -76,7 +71,6 @@ def prepare_amenity_flags(df):
     }
     
     def has_amenity(amenities_list, keywords):
-        """Check if any keyword is in any amenity."""
         if not amenities_list:
             return False
         amenities_lower = [a.lower() for a in amenities_list]
@@ -92,7 +86,49 @@ def prepare_amenity_flags(df):
             lambda x: has_amenity(x, keywords)
         )
     
-    # Add neighborhood dummy variables for PSM
+    # =========================================
+    # ADD CONTROL VARIABLES FOR PSM
+    # =========================================
+    
+    # 1. Distance from Strip (center of Las Vegas Strip)
+    STRIP_LAT = 36.1147
+    STRIP_LON = -115.1728
+    
+    if 'latitude' in df.columns and 'longitude' in df.columns:
+        def calc_distance(row):
+            if pd.isna(row['latitude']) or pd.isna(row['longitude']):
+                return None
+            # Simple Euclidean distance (good enough for this scale)
+            # ~69 miles per degree latitude, ~54.6 miles per degree longitude at this latitude
+            lat_diff = (row['latitude'] - STRIP_LAT) * 69
+            lon_diff = (row['longitude'] - STRIP_LON) * 54.6
+            return math.sqrt(lat_diff**2 + lon_diff**2)
+        
+        df['distance_from_strip'] = df.apply(calc_distance, axis=1)
+    
+    # 2. Property type dummies (top categories)
+    if 'property_type' in df.columns:
+        df['is_entire_home'] = df['property_type'].str.contains('home|house', case=False, na=False).astype(int)
+        df['is_condo'] = df['property_type'].str.contains('condo', case=False, na=False).astype(int)
+    
+    # 3. Room type dummies
+    if 'room_type' in df.columns:
+        df['is_entire_place'] = (df['room_type'] == 'Entire home/apt').astype(int)
+        df['is_private_room'] = (df['room_type'] == 'Private room').astype(int)
+    
+    # 4. Superhost flag
+    if 'host_is_superhost' in df.columns:
+        df['is_superhost'] = (df['host_is_superhost'] == 't').astype(int)
+    
+    # 5. Professional host (has multiple listings)
+    if 'calculated_host_listings_count' in df.columns:
+        df['is_professional_host'] = (df['calculated_host_listings_count'] >= 3).astype(int)
+    
+    # 6. Minimum nights (cap at 30 for outliers)
+    if 'minimum_nights' in df.columns:
+        df['min_nights_capped'] = df['minimum_nights'].clip(upper=30)
+    
+    # 7. Neighborhood dummies (top 7)
     if 'neighbourhood_cleansed' in df.columns:
         top_hoods = df['neighbourhood_cleansed'].value_counts().head(7).index.tolist()
         for i, hood in enumerate(top_hoods):
@@ -203,18 +239,35 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
    # Make a copy
     df = _df.copy()
     
-    # Default covariates
+    # Default covariates - comprehensive list
     if covariate_cols is None:
-        covariate_cols = ['bedrooms', 'accommodates']
+        covariate_cols = []
         
-        if 'bathrooms' in df.columns:
-            covariate_cols.append('bathrooms')
+        # Core property characteristics
+        core_cols = ['bedrooms', 'accommodates', 'bathrooms']
+        covariate_cols.extend([c for c in core_cols if c in df.columns])
         
-        # Add neighborhood dummies (created in prepare_amenity_flags)
+        # Distance from Strip (most important!)
+        if 'distance_from_strip' in df.columns:
+            covariate_cols.append('distance_from_strip')
+        
+        # Property type
+        type_cols = ['is_entire_home', 'is_condo', 'is_entire_place', 'is_private_room']
+        covariate_cols.extend([c for c in type_cols if c in df.columns])
+        
+        # Host characteristics
+        host_cols = ['is_superhost', 'is_professional_host']
+        covariate_cols.extend([c for c in host_cols if c in df.columns])
+        
+        # Minimum nights
+        if 'min_nights_capped' in df.columns:
+            covariate_cols.append('min_nights_capped')
+        
+        # Neighborhood dummies
         neighborhood_cols = [c for c in df.columns if c.startswith('neighborhood_')]
         covariate_cols.extend(neighborhood_cols)
         
-        # Only keep columns that actually exist
+        # Only keep columns that exist and have no issues
         covariate_cols = [c for c in covariate_cols if c in df.columns]
 
     """
