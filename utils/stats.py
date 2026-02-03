@@ -195,31 +195,19 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
     
     import streamlit as st
     
-    # Make a copy
+   # Make a copy
     df = _df.copy()
     
-    # Add neighborhood dummies FIRST (before defining covariates)
-    hood_cols = []
-    if 'neighbourhood_cleansed' in df.columns:
-        top_hoods = df['neighbourhood_cleansed'].value_counts().head(7).index.tolist()
-        for i, hood in enumerate(top_hoods):
-            col_name = f'hood_{i}'
-            df[col_name] = (df['neighbourhood_cleansed'] == hood).astype(int)
-            hood_cols.append(col_name)
-    
-    # Default covariates
+    # Default covariates (simple version - no neighborhood for now)
     if covariate_cols is None:
         covariate_cols = ['bedrooms', 'accommodates']
         
         if 'bathrooms' in df.columns:
             covariate_cols.append('bathrooms')
         
-        # Add the hood columns we just created
-        covariate_cols.extend(hood_cols)
-        
         # Only keep columns that actually exist
         covariate_cols = [c for c in covariate_cols if c in df.columns]
-        
+
     """
     Calculate Average Treatment Effect (ATE) of an amenity using PSM.
     
@@ -262,13 +250,6 @@ def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue',
         
         # Only use columns that exist
         covariate_cols = [c for c in covariate_cols if c in df.columns]
-        
-        # Add location encoding if available (critical for proper matching)
-        if 'neighbourhood_cleansed' in df.columns:
-            # Create dummy variables for neighborhoods
-            df = pd.get_dummies(df, columns=['neighbourhood_cleansed'], prefix='hood', drop_first=True)
-            hood_cols = [c for c in df.columns if c.startswith('hood_')]
-            covariate_cols.extend(hood_cols)
         
         # Add other relevant covariates if available
         optional_covariates = ['bathrooms', 'review_scores_rating', 'number_of_reviews']
