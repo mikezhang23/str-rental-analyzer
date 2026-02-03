@@ -86,8 +86,10 @@ if len(amenity_impacts) > 0:
             return '#00cc96'  # Green - recommended
         elif row['revenue_impact'] > 0:
             return '#ffa15a'  # Orange - positive but uncertain
+        elif row['significant']:
+            return '#ef553b'  # Red - not recommended
         else:
-            return '#636efa'  # Blue - inconclusive (not red)
+            return '#636efa'  # Blue - inconclusive
     
     chart_data['color'] = chart_data.apply(get_color, axis=1)
     
@@ -174,8 +176,10 @@ if len(amenity_impacts) > 0:
             return "✅ Yes"
         elif row['revenue_impact'] > 0:
             return "⚠️ Maybe"
+        elif row['p_value'] < 0.05:
+            return "❌ No"
         else:
-            return "❓ Inconclusive"  # Changed from "❌ No"
+            return "❓ Unclear"
     
     display_df['Recommendation'] = display_df.apply(get_recommendation, axis=1)
 
