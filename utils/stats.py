@@ -188,8 +188,39 @@ def match_propensity_scores(df, treatment_col, propensity_scores, caliper=0.05):
 
 
 @st.cache_data
+@st.cache_data
 def calculate_amenity_ate(_df, amenity_col, outcome_col='annual_revenue', 
                           covariate_cols=None):
+    """..."""
+    
+    import streamlit as st
+    
+    # Make a copy
+    df = _df.copy()
+    
+    # DEBUG: Check initial state
+    st.write(f"DEBUG ATE: Starting with {len(df)} rows")
+    st.write(f"DEBUG ATE: Amenity col type: {df[amenity_col].dtype}")
+    st.write(f"DEBUG ATE: Amenity unique values: {df[amenity_col].unique()[:5]}")
+    st.write(f"DEBUG ATE: Amenity value counts: {df[amenity_col].value_counts().to_dict()}")
+    
+    # Default covariates
+    if covariate_cols is None:
+        covariate_cols = ['bedrooms', 'accommodates']
+        
+        if 'bathrooms' in df.columns:
+            covariate_cols.append('bathrooms')
+            
+        covariate_cols = [c for c in covariate_cols if c in df.columns]
+    
+    st.write(f"DEBUG ATE: Covariates: {covariate_cols}")
+    
+    # Check which covariates have data
+    for col in covariate_cols:
+        st.write(f"DEBUG ATE: {col} - nulls: {df[col].isna().sum()}, dtype: {df[col].dtype}")
+    
+    st.write(f"DEBUG ATE: {outcome_col} - nulls: {df[outcome_col].isna().sum()}")
+    
     """
     Calculate Average Treatment Effect (ATE) of an amenity using PSM.
     
